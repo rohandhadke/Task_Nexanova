@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template, session, redirect
-from config import trainers_collection
+from config import trainers_collection, subjects_collection
 from routes.auth_routes import login_required
 
 trainer_bp = Blueprint('trainer', __name__)
@@ -7,8 +7,9 @@ trainer_bp = Blueprint('trainer', __name__)
 @trainer_bp.route('/trainer', methods=['GET'])
 @login_required
 def trainer_page():
+    subjects = list(subjects_collection.find({}, {'_id': 0}))
     trainers = list(trainers_collection.find())
-    return render_template('trainer.html', trainers=trainers)
+    return render_template('trainer.html', trainers=trainers,subjects = subjects)
 
 @trainer_bp.route('/api/trainer', methods=['POST'])
 @login_required
@@ -68,6 +69,7 @@ def get_trainer(tid):
 @login_required
 def show_trainer_profile(tid):
     trainer = trainers_collection.find_one({"tid": tid})
+    subjects = list(subjects_collection.find({}, {'_id': 0}))
     if not trainer:
         return render_template('404.html', message="Trainer not found"), 404
 
@@ -103,3 +105,12 @@ def update_trainer():
 
     trainers_collection.update_one({'tid': tid}, {'$set': update_fields})
     return jsonify({"msg": "Trainer updated successfully"})
+
+@trainer_bp.route('/api/trainer', methods=['GET'])
+@login_required
+def get_all_trainers():
+    try:
+        trainers = list(trainers_collection.find({}, {'_id': 0}))
+        return jsonify(trainers)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

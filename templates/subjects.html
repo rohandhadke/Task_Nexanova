@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EduTrack - Subjects</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+    .sidebar {
+      height: 100vh;
+      width: 200px;
+      position: fixed;
+      background-color: #f8f9fa;
+      padding-top: 60px;
+    }
+    .content {
+      margin-left: 220px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">EduTrack System</a>
+      <div class="d-flex">
+        <a href="/logout" class="btn btn-outline-light">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <div class="sidebar border-end">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link" href="{{url_for('trainer.trainer_page')}}">Trainers</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{{url_for('subject.show_subject_page')}}">Subjects</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Students</a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <div class="d-flex justify-content-between mt-5">
+      <h3>Subject List</h3>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCourseModal">Add Course</button>
+    </div>
+
+    <!-- Search -->
+    <div class="m-3">
+      <input type="text" class="form-control" id="searchSubjectInput" placeholder="Search by Course Name or Trainer...">
+    </div>
+
+    <!-- Course Table -->
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Sr. No.</th>
+          <th>Course Name</th>
+          <th>Duration</th>
+          <th>Trainer</th>
+          <th>Students Enrolled</th>
+          <th>Ongoing</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="courseTable">
+        {% for idx, subjects in subjects  %}
+        <tr>
+          <td>{{ idx }}</td>
+          <td>{{ subjects.name }}</td>
+          <td>{{ subjects.duration }}</td>
+          <td>{{ subjects.trainer }}</td>
+          <td>{{ subjects.students }}</td>
+          <td>{{ 'Yes' if subjects.ongoing else 'No' }}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="viewCourse('{{ subjects.id }}')">View</button>
+            <button class="btn btn-sm btn-warning" onclick="editCourse('{{ subjects.name}}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteCourse('{{ subjects.id }}')">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add Course Modal -->
+  <div class="modal fade" id="addCourseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="addCourseForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Course</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control mb-2" placeholder="Course Name" name="name" required>
+          <input type="number" class="form-control mb-2" placeholder="Duration in Mongths(e.g., 3 Months)" name="duration" required>
+          <select name="trainer" class="form-control mb-2">
+            <option value="">Select Trainer</option>
+            {% for trainer in trainers %}
+                <option value="{{ trainer.name }}">{{ trainer.name }}</option>
+            {% endfor %}
+            <option value="Not alloted">Not Alloted </option>
+        </select>          
+        <input type="number" class="form-control mb-2" placeholder="Students Enrolled" name="students" required>
+          <select class="form-control" name="ongoing" required>
+            <option value="">Is Ongoing?</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!--update course model-->
+
+  <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="editCourseForm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editCourseModalLabel">Edit Course</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editCourseNameOriginal" name="original_name">
+            <div class="mb-3">
+              <label for="editCourseName" class="form-label">Course Name</label>
+              <input type="text" class="form-control" id="editCourseName" name="name" placeholder="" required>
+            </div>
+            <div class="mb-3">
+              <label for="editCourseDuration" class="form-label">Duration</label>
+              <input type="numbers" class="form-control" id="editCourseDuration" name="editCourseDuration" required>
+            </div>
+            <div class="mb-3">
+              <label for="editCourseStudents" class="form-label">Number Of Students Enrolled!</label>
+              <input type="numbers" class="form-control" id="editCourseStudents" name="editCourseStudents" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="editTrainerSelect" class="form-label">Trainer</label>
+              <select class="form-control" id="editTrainerSelect" name="trainer" required></select>
+              <option>
+            </div>
+            <div class="mb-3">
+              <label for="editCourseStatus" class="form-label">Is Course Ongoing?</label>
+              <select class="form-control" name="ongoing" id="editCourseStatus" required>
+                <option value="">Is Ongoing?</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Update Course</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+
+  <script>
+    document.getElementById("addCourseForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const form = new FormData(this);
+      const data = Object.fromEntries(form.entries());
+
+      const res = await fetch("/api/subject", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        location.reload();
+      } else {
+        alert("Error adding course");
+      }
+    });
+
+    async function deleteCourse(id) {
+      if (confirm("Are you sure to delete this course?")) {
+        await fetch(`/api/course/${id}`, { method: "DELETE" });
+        location.reload();
+      }
+    }
+
+    function viewCourse(id) {
+      // You can implement view modal or redirect logic here
+      alert("View Course: " + id);
+    }
+
+    // Optional: Filter subjects by name or trainer
+    document.getElementById("searchSubjectInput").addEventListener("input", function () {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#courseTable tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+      });
+    });
+
+    async function editCourse(name) {
+      console.log("Editing course:", name); // Debug log
+      const res = await fetch(`/api/subject/name/${encodeURIComponent(name)}`);
+      const course = await res.json();
+    
+      console.log("Fetched course:", course); // Debug log
+    
+      if (!course || course.error) {
+        alert("Course not found");
+        return;
+      }
+    
+      document.getElementById("editCourseNameOriginal").value = course.name;
+      document.getElementById("editCourseName").value = course.name;
+      document.getElementById("editCourseDuration").value = course.duration;
+      document.getElementById("editCourseStudents").value = course.students;
+      document.getElementById("editCourseStatus").value = course.ongoing;
+
+    
+      const editTrainerSelect = document.getElementById("editTrainerSelect");
+      editTrainerSelect.innerHTML = `<option value="">Select Trainer</option>`;
+      const trainers = await fetch("/api/trainer").then(r => r.json());
+    
+      trainers.forEach(trainer => {
+        const option = document.createElement("option");
+        option.value = trainer.name;
+        option.textContent = trainer.name;
+        if (trainer.name === course.trainer) option.selected = true;
+        editTrainerSelect.appendChild(option);
+      });
+    
+      const modalElement = document.getElementById("editCourseModal");
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    }
+  document.getElementById("editCourseForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const form = new FormData(this);
+  const data = Object.fromEntries(form.entries());
+
+  const originalName = document.getElementById("editCourseNameOriginal").value;
+
+  const res = await fetch(`/api/subject/name/${encodeURIComponent(originalName)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (res.ok) {
+    location.reload();
+  } else {
+    alert("Error updating course");
+  }
+});
+
+
+    
+  </script>
+
+</body>
+</html>

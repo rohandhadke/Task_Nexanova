@@ -128,7 +128,14 @@
         <input type="text" class="form-control mb-2" placeholder="Name" name="name" id="editName" required>
         <input type="email" class="form-control mb-2" placeholder="Email" name="email" id="editEmail" required>
         <input type="number" class="form-control mb-2" placeholder="Contact No" name="phone" id="editContact" required>
-        <input type="text" class="form-control mb-2" placeholder="Subjects" name="subjects" id="editSubjects" required>
+        <!--<input type="text" class="form-control mb-2" placeholder="Subjects" name="subjects" id="editSubjects" required>-->
+        <select name="subjects" id="editSubject" class="form-control mb-2">
+          <option value="">Select Subject or Course</option>
+          {% for subject in subjects %}
+              <option value="{{ subject.name }}">{{ subject.name }}</option>
+          {% endfor %}
+          <option value="Not alloted">Not Alloted </option>
+        </select> 
         <input type="text" class="form-control mb-2" placeholder="Batches (comma-separated)" name="batches" id="editBatches" required>
       </div>
       <div class="modal-footer">
@@ -184,7 +191,7 @@
           document.getElementById('editName').value = data.name;
           document.getElementById('editEmail').value = data.email;
           document.getElementById('editContact').value = data.phone;
-          document.getElementById('editSubjects').value = data.subject || '';
+          document.getElementById('editSubject').value = data.subjects || '';
           document.getElementById('editBatches').value = data.batches ? data.batches.join(', ') : '';
     
           const modalEl = document.getElementById('editTrainerModal');
@@ -206,7 +213,7 @@
         tid: document.getElementById('editTid').value,
         name: document.getElementById('editName').value,
         email: document.getElementById('editEmail').value,
-        subject: document.getElementById('editSubject').value,
+        subjects: document.getElementById('editSubject').value,
         batches: document.getElementById('editBatches').value.split(',').map(b => b.trim())
       };
   

@@ -6,7 +6,6 @@ DATABASE_NAME = "EduTrack"
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client[DATABASE_NAME]
 
-# Use ping command to check connectivity
 response = client.admin.command('ping')
 
 if response.get("ok") == 1.0:
@@ -24,7 +23,7 @@ admin_exists = admin_collection.find_one({'username': 'admin'})
 if admin_exists:
     print("Admin already Created!")
 else:
-    hashed_password = generate_password_hash("admin")  # Default password
+    hashed_password = generate_password_hash("admin")  
     admin_collection.insert_one({
         "username": "admin",
         "password": hashed_password

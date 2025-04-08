@@ -18,7 +18,6 @@ auth_bp = Blueprint('auth', __name__)
 def home():
     return redirect('/login')
 
-# GET login page
 @auth_bp.route('/login', methods=['GET'])
 def show_login():
     return render_template('login.html')

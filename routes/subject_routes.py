@@ -58,17 +58,6 @@ def show_subject_page():
     subjects = list(subjects_collection.find({}, {'_id': 0}))
     return render_template('subjects.html', subjects=enumerate(subjects, start=1), trainers=trainers)
 
-# @subject_bp.route('/api/subject/<string:subject_id>', methods=['GET'])
-# def get_subject(subject_id):
-#     try:
-#         subject = subjects_collection.find_one({"_id": ObjectId(subject_id)})
-#         if subject:
-#             subject['_id'] = str(subject['_id'])  # Convert ObjectId to string
-#             return jsonify(subject)
-#         return jsonify({"error": "Subject not found"}), 404
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
 
 @subject_bp.route('/api/subject/name/<string:subject_name>', methods=['GET'])
 @login_required

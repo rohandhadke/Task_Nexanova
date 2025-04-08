@@ -49,12 +49,6 @@ def add_trainer():
     trainers_collection.insert_one(new_trainer)
     return jsonify({"msg": "Trainer added successfully", "tid": new_id})
 
-# @trainer_bp.route('/api/trainer', methods=['GET'])
-# @login_required
-# def get_trainers():
-#     trainers = list(trainers_collection.find({}, {'_id': 0}))
-#     return jsonify(trainers)
-
 @trainer_bp.route('/api/trainer/<tid>', methods=['GET'])
 @login_required
 def get_trainer(tid):
@@ -75,9 +69,7 @@ def show_trainer_profile(tid):
 
     trainer['_id'] = str(trainer['_id'])  # Optional: convert ObjectId to string
     return render_template('trainer_profile.html', trainer=trainer)
-
-
-
+    
 @trainer_bp.route('/api/trainer/<string:subject>/topic', methods=['GET'])
 @login_required
 def get_trainers_by_subject(subject):
@@ -93,7 +85,7 @@ def delete_trainer(trainer_id):
 @trainer_bp.route('/api/trainer/update', methods=['PUT'])
 @login_required
 def update_trainer():
-    print("Received JSON:", request.json)  # ✅ Add this
+    print("Received JSON:", request.json)  
 
     data = request.json
     if not data:

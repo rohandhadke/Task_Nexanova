@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduTrack - Subjects</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
   <style>
     body {
+      padding-top: 56px;
       overflow-x: hidden;
     }
     .sidebar {
@@ -16,10 +18,69 @@
       position: fixed;
       background-color: #f8f9fa;
       padding-top: 60px;
+      transition: all 0.3s;
+      z-index: 1000;
     }
     .content {
       margin-left: 220px;
       padding: 20px;
+      transition: all 0.3s;
+    }
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 65px;
+      left: 10px;
+      z-index: 1001;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+      .sidebar-toggle {
+        display: block;
+      }
+    }
+    @media (max-width: 768px) {
+      .move{
+        margin-left: 50px;
+      }
+      .modal-dialog {
+        margin: 1rem auto;
+      }
+      .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .table th, .table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+    }
+    @media (max-width: 576px) {
+      .navbar-brand {
+        font-size: 1rem;
+      }
+      .content {
+        padding: 10px;
+      }
+      #searchSubjectInput {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -29,14 +90,22 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">EduTrack System</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+        <!--<span class="navbar-toggler-icon"></span>-->
+      </button>
       <div class="d-flex">
         <a href="/logout" class="btn btn-outline-light">Logout</a>
       </div>
     </div>
   </nav>
 
+  <!-- Sidebar Toggle Button -->
+  <button class="btn btn-primary sidebar-toggle mt-1" id="sidebarToggle">
+    ☰
+  </button>
+
   <!-- Sidebar -->
-  <div class="sidebar border-end">
+  <div class="sidebar border-end" id="sidebar">
     <ul class="nav flex-column">
       <li class="nav-item">
         <a class="nav-link" href="{{url_for('trainer.trainer_page')}}">Trainers</a>
@@ -51,8 +120,8 @@
   </div>
 
   <!-- Main Content -->
-  <div class="content">
-    <div class="d-flex justify-content-between mt-5">
+  <div class="content" id="mainContent">
+    <div class="d-flex justify-content-between md-5 move">
       <h3>Subject List</h3>
       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCourseModal">Add Course</button>
     </div>
@@ -63,62 +132,263 @@
     </div>
 
     <!-- Course Table -->
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Sr. No.</th>
-          <th>Course Name</th>
-          <th>Duration</th>
-          <th>Trainer</th>
-          <th>Students Enrolled</th>
-          <th>Ongoing</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="courseTable">
-        {% for idx, subjects in subjects  %}
-        <tr>
-          <td>{{ idx }}</td>
-          <td>{{ subjects.name }}</td>
-          <td>{{ subjects.duration }}</td>
-          <td>{{ subjects.trainer }}</td>
-          <td>{{ subjects.students }}</td>
-          <td>{{ 'Yes' if subjects.ongoing else 'No' }}</td>
-          <td>
-            <button class="btn btn-sm btn-primary" onclick="viewCourse('{{ subjects.id }}')">View</button>
-            <button class="btn btn-sm btn-warning" onclick="editCourse('{{ subjects.name}}')">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteCourse('{{ subjects.id }}')">Delete</button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Sr. No.</th>
+            <th>Course Name</th>
+            <th>Duration</th>
+            <th>Trainer</th>
+            <th>Students Enrolled</th>
+            <th>Ongoing</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="courseTable">
+          {% for idx, subjects in subjects  %}
+          <tr>
+            <td>{{ idx }}</td>
+            <td>{{ subjects.name }}</td>
+            <td>{{ subjects.duration }}</td>
+            <td>{{ subjects.trainer }}</td>
+            <td>{{ subjects.students }}</td>
+            <td>{{ 'Yes' if subjects.ongoing else 'No' }}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-sm btn-primary" onclick="viewCourse('{{ subjects.subject_id }}')">View</button>
+                <button class="btn btn-sm btn-warning" onclick="editCourse('{{ subjects.name}}')">Edit</button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Add Course Modal -->
   <div class="modal fade" id="addCourseModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <form class="modal-content" id="addCourseForm">
         <div class="modal-header">
           <h5 class="modal-title">Add Course</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="text" class="form-control mb-2" placeholder="Course Name" name="name" required>
-          <input type="number" class="form-control mb-2" placeholder="Duration in Mongths(e.g., 3 Months)" name="duration" required>
-          <select name="trainer" class="form-control mb-2">
-            <option value="">Select Trainer</option>
-            {% for trainer in trainers %}
-                <option value="{{ trainer.name }}">{{ trainer.name }}</option>
-            {% endfor %}
-            <option value="Not alloted">Not Alloted </option>
-        </select>          
-        <input type="number" class="form-control mb-2" placeholder="Students Enrolled" name="students" required>
-          <select class="form-control" name="ongoing" required>
-            <option value="">Is Ongoing?</option>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
+          <div class="row">
+            <div class="col-md-6">
+              <input type="text" class="form-control mb-2" placeholder="Course Name" name="name" required>
+              <input type="number" class="form-control mb-2" placeholder="Duration in Months (e.g., 3 Months)" name="duration" required>
+              <select name="trainer" class="form-control mb-2">
+                <option value="">Select Trainer</option>
+                {% for trainer in trainers %}
+                    <option value="{{ trainer.name }}">{{ trainer.name }}</option>
+                {% endfor %}
+                <option value="Not alloted">Not Alloted</option>
+              </select>
+              <input type="number" class="form-control mb-2" placeholder="Students Enrolled" name="students" required>
+              <select class="form-control" name="ongoing" required>
+                <option value="">Is Ongoing?</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Topics</label>
+              <select name="topics" id="topicsSelect" class="form-control" multiple="multiple" style="height: 200px;" required>
+                <optgroup label="Full Stack Development">
+                  <option value="HTML">HTML</option>
+                  <option value="CSS">CSS</option>
+                  <option value="JavaScript">JavaScript</option>
+                  <option value="React.js">React.js</option>
+                  <option value="Angular">Angular</option>
+                  <option value="Vue.js">Vue.js</option>
+                  <option value="TypeScript">TypeScript</option>
+                  <option value="Bootstrap">Bootstrap</option>
+                  <option value="Materialize">Materialize</option>
+                  <option value="DOM Manipulation">DOM Manipulation</option>
+                  <option value="Node.js">Node.js</option>
+                  <option value="Express.js">Express.js</option>
+                  <option value="Python">Python</option>
+                  <option value="Django">Django</option>
+                  <option value="Flask">Flask</option>
+                  <option value="FastAPI">FastAPI</option>
+                  <option value="Java">Java</option>
+                  <option value="Servlet">Servlet</option>
+                  <option value="Spring Boot">Spring Boot</option>
+                  <option value="Microservices">Microservices</option>
+                  <option value="RESTful API Design">RESTful API Design</option>
+                  <option value="GraphQL">GraphQL</option>
+                  <option value="Authentication & Authorization">Authentication & Authorization</option>
+                  <option value="JWT">JWT</option>
+                  <option value="OAuth">OAuth</option>
+                  <option value="SQL">SQL</option>
+                  <option value="MySQL">MySQL</option>
+                  <option value="PostgreSQL">PostgreSQL</option>
+                  <option value="NoSQL">NoSQL</option>
+                  <option value="MongoDB">MongoDB</option>
+                  <option value="Firebase">Firebase</option>
+                  <option value="Git">Git</option>
+                  <option value="GitHub">GitHub</option>
+                  <option value="GitLab">GitLab</option>
+                  <option value="Bitbucket">Bitbucket</option>
+                  <option value="Docker">Docker</option>
+                  <option value="Kubernetes">Kubernetes</option>
+                  <option value="AWS">AWS</option>
+                  <option value="Azure">Azure</option>
+                  <option value="Google Cloud">Google Cloud</option>
+                  <option value="CI/CD">CI/CD</option>
+              </optgroup>
+              <optgroup label="Data Structures and Algorithm">
+                <option value="Arrays">Arrays</option>
+                <option value="Linked Lists">Linked Lists</option>
+                <option value="Stacks">Stacks</option>
+                <option value="Queues">Queues</option>
+                <option value="Hash Tables">Hash Tables</option>
+                <option value="Binary Trees">Binary Trees</option>
+                <option value="AVL Trees">AVL Trees</option>
+                <option value="Graphs">Graphs</option>
+                <option value="Heaps">Heaps</option>
+                <option value="QuickSort">QuickSort</option>
+                <option value="MergeSort">MergeSort</option>
+                <option value="BubbleSort">BubbleSort</option>
+                <option value="Binary Search">Binary Search</option>
+                <option value="Linear Search">Linear Search</option>
+                <option value="Dynamic Programming">Dynamic Programming</option>
+                <option value="Greedy Algorithms">Greedy Algorithms</option>
+              </optgroup>
+              <optgroup label="Software Engineering Fundamentals">
+      
+                <option value="Software Development Life Cycle (SDLC)">Software Development Life Cycle (SDLC)</option>
+                <option value="Agile Methodology">Agile Methodology</option>
+                <option value="Waterfall Model">Waterfall Model</option>
+                <option value="Test-Driven Development (TDD)">Test-Driven Development (TDD)</option>
+                <option value="Version Control">Version Control</option>
+                <option value="Project Management Tools">Project Management Tools</option>
+                <option value="Quality Assurance">Quality Assurance</option>
+                <option value="Unit Testing">Unit Testing</option>
+                <option value="Integration Testing">Integration Testing</option>
+                <option value="Software Architecture">Software Architecture</option>
+                <option value="MVC">MVC</option>
+                <option value="Microservices">Microservices</option>
+                <option value="Design Patterns">Design Patterns</option>
+              </optgroup>
+              <optgroup label="Mobile App Development">
+                <option value="Java">Java</option>
+                <option value="Kotlin">Kotlin</option>
+                <option value="Android Studio">Android Studio</option>
+                <option value="Firebase Integration">Firebase Integration</option>
+                <option value="Swift">Swift</option>
+                <option value="Objective-C">Objective-C</option>
+                <option value="Xcode">Xcode</option>
+                <option value="Cocoa Touch">Cocoa Touch</option>
+                <option value="Flutter">Flutter</option>
+                <option value="React Native">React Native</option>
+                <option value="Xamarin">Xamarin</option>
+              </optgroup>
+              <optgroup label="Game Development">
+                <option value="Unity3D">Unity3D</option>
+                <option value="Unreal Engine">Unreal Engine</option>
+                <option value="2D Graphics Programming">2D Graphics Programming</option>
+                <option value="3D Graphics Programming">3D Graphics Programming</option>
+                <option value="Game Physics">Game Physics</option>
+                <option value="Game AI">Game AI</option>
+                <option value="VR Development">VR Development</option>
+                <option value="AR Development">AR Development</option>
+                <option value="Multiplayer Game Development">Multiplayer Game Development</option>
+                <option value="Game Design Principles">Game Design Principles</option>
+              </optgroup>
+              <optgroup label="Cloud Computing">
+                <option value="AWS">AWS</option>
+                <option value="Microsoft Azure">Microsoft Azure</option>
+                <option value="Google Cloud Platform (GCP)">Google Cloud Platform (GCP)</option>
+                <option value="Serverless Architectures">Serverless Architectures</option>
+                <option value="Cloud Storage">Cloud Storage</option>
+                <option value="Cloud Databases">Cloud Databases</option>
+                <option value="Docker">Docker</option>
+                <option value="Kubernetes">Kubernetes</option>
+              </optgroup>
+              <optgroup label="Cybersecurity">
+                <option value="Ethical Hacking">Ethical Hacking</option>
+                <option value="Penetration Testing">Penetration Testing</option>
+                <option value="Encryption & Decryption">Encryption & Decryption</option>
+                <option value="Network Security">Network Security</option>
+                <option value="Malware Analysis">Malware Analysis</option>
+                <option value="OWASP Top 10 Security Risks">OWASP Top 10 Security Risks</option>
+                <option value="Firewalls">Firewalls</option>
+                <option value="Intrusion Detection Systems">Intrusion Detection Systems</option>
+              </optgroup>
+              <optgroup label="DevOps">
+                <option value="CI/CD Pipelines">CI/CD Pipelines</option>
+                <option value="Version Control">Version Control</option>
+                <option value="Automation Tools">Automation Tools</option>
+                <option value="Docker">Docker</option>
+                <option value="Kubernetes">Kubernetes</option>
+                <option value="Terraform">Terraform</option>
+                <option value="Ansible">Ansible</option>
+                <option value="Prometheus">Prometheus</option>
+                <option value="Grafana">Grafana</option>
+              </optgroup>
+              <optgroup label="Machine Learning & Artificial Intelligence">
+      
+                <option value="Supervised Learning">Supervised Learning</option>
+                <option value="Unsupervised Learning">Unsupervised Learning</option>
+                <option value="Classification">Classification</option>
+                <option value="Regression">Regression</option>
+                <option value="Neural Networks">Neural Networks</option>
+                <option value="Convolutional Neural Networks (CNN)">Convolutional Neural Networks (CNN)</option>
+                <option value="Recurrent Neural Networks (RNN)">Recurrent Neural Networks (RNN)</option>
+                <option value="Natural Language Processing (NLP)">Natural Language Processing (NLP)</option>
+                <option value="Reinforcement Learning">Reinforcement Learning</option>
+              </optgroup>
+              <optgroup label="Blockchain Development">
+                <option value="Blockchain Basics">Blockchain Basics</option>
+                <option value="Cryptocurrency">Cryptocurrency</option>
+                <option value="Bitcoin">Bitcoin</option>
+                <option value="Ethereum">Ethereum</option>
+                <option value="Solidity">Solidity</option>
+                <option value="Ethereum Smart Contracts">Ethereum Smart Contracts</option>
+                <option value="Decentralized Applications (dApps)">Decentralized Applications (dApps)</option>
+                <option value="Blockchain Security">Blockchain Security</option>
+                <option value="Consensus Algorithms">Consensus Algorithms</option>
+              </optgroup>
+              <optgroup label="Testing & Quality Assurance">
+                <option value="Unit Testing">Unit Testing</option>
+                <option value="Integration Testing">Integration Testing</option>
+                <option value="Test Automation">Test Automation</option>
+                <option value="Performance Testing">Performance Testing</option>
+                <option value="JUnit">JUnit</option>
+                <option value="NUnit">NUnit</option>
+                <option value="Selenium">Selenium</option>
+                <option value="Cypress">Cypress</option>
+                <option value="JMeter">JMeter</option>
+                <option value="LoadRunner">LoadRunner</option>
+                <option value="Behavior-Driven Development (BDD)">Behavior-Driven Development (BDD)</option>
+                <option value="Test-Driven Development (TDD)">Test-Driven Development (TDD)</option>
+              </optgroup>
+              <optgroup label="Software Project Management">
+                <option value="Object-Oriented Design">Object-Oriented Design</option>
+                <option value="SOLID Principles">SOLID Principles</option>
+                <option value="MVC">MVC</option>
+                <option value="Microservices Architecture">Microservices Architecture</option>
+                <option value="Event-Driven Architecture">Event-Driven Architecture</option>
+                <option value="Monolithic vs Microservices">Monolithic vs Microservices</option>
+                <option value="System Design Interviews">System Design Interviews</option>
+                <option value="Agile Methodologies">Agile Methodologies</option>
+                <option value="Scrum">Scrum</option>
+                <option value="Kanban">Kanban</option>
+                <option value="Waterfall">Waterfall</option>
+                <option value="Risk Management">Risk Management</option>
+                <option value="Cost Estimation">Cost Estimation</option>
+                <option value="Stakeholder Management">Stakeholder Management</option>
+                <option value="Change Management">Change Management</option>
+              </optgroupt>
+                      
+                <!-- Other optgroups remain the same -->
+              </select>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-primary" type="submit">Add</button>
@@ -126,8 +396,8 @@
       </form>
     </div>
   </div>
-  <!--update course model-->
 
+  <!-- Edit Course Modal -->
   <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <form id="editCourseForm">
@@ -150,11 +420,9 @@
               <label for="editCourseStudents" class="form-label">Number Of Students Enrolled!</label>
               <input type="numbers" class="form-control" id="editCourseStudents" name="editCourseStudents" required>
             </div>
-            
             <div class="mb-3">
               <label for="editTrainerSelect" class="form-label">Trainer</label>
               <select class="form-control" id="editTrainerSelect" name="trainer" required></select>
-              <option>
             </div>
             <div class="mb-3">
               <label for="editCourseStatus" class="form-label">Is Course Ongoing?</label>
@@ -165,7 +433,6 @@
               </select>
             </div>
           </div>
-          
           <div class="modal-footer">
             <button type="submit" class="btn btn-primary">Update Course</button>
           </div>
@@ -173,13 +440,63 @@
       </form>
     </div>
   </div>
-  
+
+  <!-- Course Details Modal -->
+  <div class="modal fade" id="courseDetailsModal" tabindex="-1" aria-labelledby="courseDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="courseDetailsLabel">Course Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Course Name:</strong> <span id="courseName"></span></p>
+              <p><strong>Registered On:</strong> <span id="courseDate"></span></p>
+              <p><strong>Number of Trainers:</strong> <span id="trainerCount"></span></p>
+              <p><strong>Number of Students:</strong> <span id="studentCount"></span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Topics Covered:</strong></p>
+              <div style="max-height: 200px; overflow-y: auto;">
+                <ul id="topicsList"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p><strong>Roadmap:</strong></p>
+            <div id="roadmapContent" style="max-height: 300px; overflow-y: auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // Toggle sidebar on mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      if (window.innerWidth <= 992 && 
+          !sidebar.contains(event.target) && 
+          event.target !== sidebarToggle && 
+          !sidebarToggle.contains(event.target)) {
+        sidebar.classList.remove('active');
+      }
+    });
+
     document.getElementById("addCourseForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       const form = new FormData(this);
       const data = Object.fromEntries(form.entries());
+      const topics = $('#topicsSelect').val(); // Select2 returns an array
+      data.topics = topics;
 
       const res = await fetch("/api/subject", {
         method: "POST",
@@ -201,12 +518,57 @@
       }
     }
 
-    function viewCourse(id) {
-      // You can implement view modal or redirect logic here
-      alert("View Course: " + id);
+    async function viewCourse(courseId) {
+      if (!courseId) {
+        console.error("Missing courseId");
+        alert("Invalid course selected.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/subject/${courseId}`);
+        const data = await res.json();
+    
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+    
+        const subject = data.subject;
+    
+        // Fill modal with course data
+        document.getElementById('courseName').textContent = data.name || 'N/A';
+        document.getElementById('courseDate').textContent = data.registered_on || 'N/A';
+        document.getElementById('trainerCount').textContent = data.trainers?.length || 0;
+        document.getElementById('studentCount').textContent = data.students?.length || 0;
+    
+        // Topics
+        const topicsList = document.getElementById('topicsList');
+        topicsList.innerHTML = '';
+        if (data.topics?.length) {
+          data.topics.forEach(topic => {
+            const li = document.createElement('li');
+            li.textContent = topic;
+            topicsList.appendChild(li);
+          });
+        } else {
+          topicsList.innerHTML = '<li>No topics added yet.</li>';
+        }
+    
+        // Roadmap
+        document.getElementById('roadmapContent').innerHTML = data.roadmap || '<em>No roadmap available.</em>';
+    
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('courseDetailsModal'));
+        modal.show();
+    
+      } catch (error) {
+        console.error("Error fetching course:", error);
+        alert("Failed to load course details.");
+      }
     }
 
-    // Optional: Filter subjects by name or trainer
+    // Filter subjects by name or trainer
     document.getElementById("searchSubjectInput").addEventListener("input", function () {
       const filter = this.value.toLowerCase();
       const rows = document.querySelectorAll("#courseTable tr");
@@ -217,11 +579,11 @@
     });
 
     async function editCourse(name) {
-      console.log("Editing course:", name); // Debug log
+      console.log("Editing course:", name);
       const res = await fetch(`/api/subject/name/${encodeURIComponent(name)}`);
       const course = await res.json();
     
-      console.log("Fetched course:", course); // Debug log
+      console.log("Fetched course:", course);
     
       if (!course || course.error) {
         alert("Course not found");
@@ -234,7 +596,6 @@
       document.getElementById("editCourseStudents").value = course.students;
       document.getElementById("editCourseStatus").value = course.ongoing;
 
-    
       const editTrainerSelect = document.getElementById("editTrainerSelect");
       editTrainerSelect.innerHTML = `<option value="">Select Trainer</option>`;
       const trainers = await fetch("/api/trainer").then(r => r.json());
@@ -251,29 +612,26 @@
       const modal = new bootstrap.Modal(modalElement);
       modal.show();
     }
-  document.getElementById("editCourseForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
-  const form = new FormData(this);
-  const data = Object.fromEntries(form.entries());
 
-  const originalName = document.getElementById("editCourseNameOriginal").value;
+    document.getElementById("editCourseForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const form = new FormData(this);
+      const data = Object.fromEntries(form.entries());
 
-  const res = await fetch(`/api/subject/name/${encodeURIComponent(originalName)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+      const originalName = document.getElementById("editCourseNameOriginal").value;
 
-  if (res.ok) {
-    location.reload();
-  } else {
-    alert("Error updating course");
-  }
-});
+      const res = await fetch(`/api/subject/name/${encodeURIComponent(originalName)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-
-    
+      if (res.ok) {
+        location.reload();
+      } else {
+        alert("Error updating course");
+      }
+    });
   </script>
-
 </body>
 </html>

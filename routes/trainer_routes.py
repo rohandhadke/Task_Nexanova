@@ -93,18 +93,26 @@ def delete_trainer(trainer_id):
 @trainer_bp.route('/api/trainer/update', methods=['PUT'])
 @login_required
 def update_trainer():
+    print("Received JSON:", request.json)  # ✅ Add this
+
     data = request.json
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON"}), 400
+
     tid = data.get('tid')
+    if not tid:
+        return jsonify({"error": "Trainer ID is required"}), 400
 
     update_fields = {
         "name": data.get('name'),
         "email": data.get('email'),
-        "subjects": data.get('subject'),
+        "subjects": data.get('subjects'),
         "batches": data.get('batches')
     }
 
     trainers_collection.update_one({'tid': tid}, {'$set': update_fields})
     return jsonify({"msg": "Trainer updated successfully"})
+
 
 @trainer_bp.route('/api/trainer', methods=['GET'])
 @login_required

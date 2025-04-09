@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from werkzeug.security import generate_password_hash
 
 MONGO_URI = "mongodb://localhost:27017/"
 DATABASE_NAME = "EduTrack"

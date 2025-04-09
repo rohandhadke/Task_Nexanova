@@ -22,8 +22,6 @@ def add_trainer():
     dob = data.get('dob')
     subject = data.get('subjects')
 
-
-    # Generate new trainer ID
     last_trainer = trainers_collection.find_one(
         {"tid": {"$regex": "^T"}}, sort=[("tid", -1)]
     )
@@ -56,7 +54,7 @@ def get_trainer(tid):
     if not trainer:
         return jsonify({"error": "Trainer not found"}), 404
 
-    trainer['_id'] = str(trainer['_id'])  # if using MongoDB
+    trainer['_id'] = str(trainer['_id']) 
     return jsonify(trainer)
 
 @trainer_bp.route('/trainer/<tid>', methods=['GET'])
@@ -67,7 +65,7 @@ def show_trainer_profile(tid):
     if not trainer:
         return render_template('404.html', message="Trainer not found"), 404
 
-    trainer['_id'] = str(trainer['_id'])  # Optional: convert ObjectId to string
+    trainer['_id'] = str(trainer['_id'])  
     return render_template('trainer_profile.html', trainer=trainer)
     
 @trainer_bp.route('/api/trainer/<string:subject>/topic', methods=['GET'])

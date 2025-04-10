@@ -71,17 +71,6 @@ then "http://127.0.0.1:5000/subject"
     view subjects info
 
 
-Tech Stack Used:
-    Frontend - 
-        HTML
-        CSS 
-        Bootstrap
-
-    Backend - 
-        Flask(Python's lightweight web framework)
-    
-    Database - 
-        MongoDB
 
 
 

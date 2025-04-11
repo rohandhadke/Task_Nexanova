@@ -39,7 +39,7 @@ from werkzeug.security import generate_password_hash
 username = quote_plus("user1")
 password = quote_plus("password@user1")  # encode special characters
 
-MONGO_URI = f"mongodb+srv://{username}:{password}@edutrack.ytjm1ms.mongodb.net/EduTrack"
+MONGO_URI = f"mongodb+srv://{username}:{password}@edutrack.ytjm1ms.mongodb.net/EduTrack?retryWrites=true&w=majority"
 DATABASE_NAME = "EduTrack"
 
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)

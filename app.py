@@ -3,6 +3,7 @@ from flask_cors import CORS
 from routes.auth_routes import auth_bp
 from routes.trainer_routes import trainer_bp
 from routes.subject_routes import subject_bp
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
